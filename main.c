@@ -39,7 +39,7 @@
 #include "cybsp.h"
 #include "cy_utils.h"
 #include "xmc_posif.h"
-#include "retarget_io.h"
+#include "cy_retarget_io.h"
 #include "stdio.h"
 #include "xmc_ccu4.h"
 
@@ -47,7 +47,8 @@
 *  Macros
 *******************************************************************************/
 /* Define macros for XMC1400 Boot kit */
-#ifdef TARGET_KIT_XMC14_BOOT_001
+
+#if (UC_SERIES == XMC14)
 #define INPUT_0         (XMC_POSIF_INPUT_PORT_B)     /* Choice of INPUT_PORT_B */
 #define INPUT_1         (XMC_POSIF_INPUT_PORT_A)     /* Choice of INPUT_PORT_A */
 #define INPUT_2         (XMC_POSIF_INPUT_PORT_A)     /* Choice of INPUT_PORT_A */
@@ -56,7 +57,7 @@
 #endif
 
 /* Define macros for XMC4700 Relax kit */
-#ifdef TARGET_KIT_XMC47_RELAX_V1
+#if (UC_SERIES == XMC47)
 #define INPUT_0         (XMC_POSIF_INPUT_PORT_B)     /* Choice of INPUT_PORT_B */
 #define INPUT_1         (XMC_POSIF_INPUT_PORT_B)     /* Choice of INPUT_PORT_B */
 #define INPUT_2         (XMC_POSIF_INPUT_PORT_B)     /* Choice of INPUT_PORT_A */
@@ -272,11 +273,11 @@ int main(void)
 {
     cy_rslt_t result;
 
-    #ifdef TARGET_KIT_XMC14_BOOT_001
+    #if (UC_SERIES == XMC14)
     /* Get CCU clock frequency in Hertz */
     clock = (XMC_SCU_CLOCK_GetFastPeripheralClockFrequency()/1000000);
     #endif
-    #ifdef TARGET_KIT_XMC47_RELAX_V1
+    #if (UC_SERIES == XMC47)
     /* Get CCU clock frequency in Hertz */
     clock = (XMC_SCU_CLOCK_GetCcuClockFrequency()/1000000);
     #endif
@@ -289,7 +290,7 @@ int main(void)
     }
 
     /* Initialize retarget-io to use the debug UART port */
-    retarget_io_init();
+    cy_retarget_io_init(CYBSP_DEBUG_UART_HW);
 
     /* Get the prescaler value used in CCU40_CC41 Slice */
     prescaler = (1 << (XMC_CCU4_SLICE_PRESCALER_t)XMC_CCU4_SLICE_GetPrescaler(CAPTURE_0_HW));

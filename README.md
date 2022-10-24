@@ -1,18 +1,19 @@
 # XMC&trade; MCU: POSIF Hall
 
-This code example demonstrates a position interface (POSIF) module in Hall sensor mode and uses the capture and compare unit 4 (CCU40) module to determine the speed of rotation of the motor. An interrupt is generated everytime a correct/incorrect Hall event is detected. The SysTick timer is used to display the timing between the two correct hall events and incorrect hall event occurrence on the terminal.
+This code example demonstrates a position interface (POSIF) module in Hall sensor mode and uses the capture and compare unit 4 (CCU40) module to determine the speed of rotation of the motor. An interrupt is generated everytime a correct/incorrect Hall event is detected. The SysTick timer is used to display the timing between two correct Hall events and an incorrect Hall event occurrence on the terminal.
 
 ## Requirements
 
-- [ModusToolbox&trade; software](https://www.cypress.com/products/modustoolbox-software-environment) v2.3
+- [ModusToolbox&trade; software](https://www.cypress.com/products/modustoolbox-software-environment) v3.0
 - [SEGGER J-Link software](https://www.segger.com/downloads/jlink/#J-LinkSoftwareAndDocumentationPack)
 - Programming language: C
 - Associated parts: All [XMC&trade; MCU](https://www.infineon.com/cms/en/product/microcontroller/32-bit-industrial-microcontroller-based-on-arm-cortex-m/) parts
 
 ## Supported toolchains (make variable 'TOOLCHAIN')
 
-- GNU Arm® embedded compiler v9.3.1 (`GCC_ARM`) - Default value of `TOOLCHAIN`
-
+- GNU Arm&reg; embedded compiler v10.3.1 (`GCC_ARM`) - Default value of `TOOLCHAIN`
+- Arm&reg; compiler v6.16 (`ARM`)
+- IAR C/C++ compiler v9.30.1 (`IAR`)
 
 ## Supported kits (make variable 'TARGET')
 
@@ -49,13 +50,15 @@ Table 1 and 2 show the Hall input signal connections to ports in XMC1400 and XMC
 
 Install a terminal emulator if you don't have one. Instructions in this document use [Tera Term](https://ttssh2.osdn.jp/index.html.en).
 
+This example requires no additional software or tools.
+
 ## Using the code example
 
 Create the project and open it using one of the following:
 
 <details open><summary><b>In Eclipse IDE for ModusToolbox&trade; software</b></summary>
 
-1. Click the **New Application** link in the **Quick Panel** (or, use **File** > **New** > **ModusToolbox Application**). This launches the [Project Creator](https://www.cypress.com/ModusToolboxProjectCreator) tool.
+1. Click the **New Application** link in the **Quick Panel** (or, use **File** > **New** > **ModusToolbox&trade; Application**). This launches the [Project Creator](https://www.cypress.com/ModusToolboxProjectCreator) tool.
 
 2. Pick a kit supported by the code example from the list shown in the **Project Creator - Choose Board Support Package (BSP)** dialog.
 
@@ -67,9 +70,9 @@ Create the project and open it using one of the following:
 
 3. In the **Project Creator - Select Application** dialog, choose the example by enabling the checkbox.
 
-4. Optionally, change the suggested **New Application Name**.
+4. (Optional) Change the suggested **New Application Name**.
 
-5. Enter the local path in the **Application(s) Root Path** field to indicate where the application needs to be created. Applications that share libraries should be in the same root path.
+5. The **Application(s) Root Path** defaults to the Eclipse workspace which is usually the desired location for the application. If you want to store the application in a different location, you can change the *Application(s) Root Path* value. Applications that share libraries should be in the same root path.
 
 6. Click **Create** to complete the application creation process.
 
@@ -77,27 +80,34 @@ For more details, see the [Eclipse IDE for ModusToolbox&trade; software user gui
 
 </details>
 
-<details><summary><b>In command-line interface (CLI)</b></summary>
+<details open><summary><b>In command-line interface (CLI)</b></summary>
 
-ModusToolbox&trade; software provides the Project Creator as both a GUI tool and a command line tool, "project-creator-cli". The CLI tool can be used to create applications from a CLI terminal or from within batch files or shell scripts. This tool is available in the *{ModusToolbox&trade; software install directory}/tools_{version}/project-creator/* directory.
+ModusToolbox&trade; software provides the Project Creator as both a GUI tool and the command line tool, "project-creator-cli". The CLI tool can be used to create applications from a CLI terminal or from within batch files or shell scripts. This tool is available in the *{ModusToolbox&trade; software install directory}/tools_{version}/project-creator/* directory.
 
 Use a CLI terminal to invoke the "project-creator-cli" tool. On Windows, use the command line "modus-shell" program provided in the ModusToolbox&trade; software installation instead of a standard Windows command-line application. This shell provides access to all ModusToolbox&trade; software tools. You can access it by typing `modus-shell` in the search box in the Windows menu. In Linux and macOS, you can use any terminal application.
 
-The following table lists the arguments for this tool:
+This tool has the following arguments:
 
 Argument | Description | Required/optional
 ---------|-------------|-----------
-`--board-id` | Defined in the `<id>` field of the [BSP](https://github.com/cypresssemiconductorco?q=bsp-manifest&type=&language=&sort=) manifest | Required
-`--app-id`   | Defined in the `<id>` field of the [CE](https://github.com/cypresssemiconductorco?q=ce-manifest&type=&language=&sort=) manifest | Required
+`--board-id` | Defined in the `<id>` field of the [BSP](https://github.com/Infineon?q=bsp-manifest&type=&language=&sort=) manifest | Required
+`--app-id`   | Defined in the `<id>` field of the [CE](https://github.com/Infineon?q=ce-manifest&type=&language=&sort=) manifest | Required
 `--target-dir`| Specify the directory in which the application is to be created if you prefer not to use the default current working directory | Optional
 `--user-app-name`| Specify the name of the application if you prefer to have a name other than the example's default name | Optional
 
+<br>
 
-The following example will clone the "[XMC Posif Hall](https://github.com/cypresssemiconductorco/mtb-example-xmc-posif-hall)" application with the desired name "MyXMCPosifHall" configured for the *KIT_XMC47_RELAX_1* BSP into the specified working directory, *C:/mtb_projects*:
+The following example will clone the "[POSIF HALL](https://github.com/Infineon/mtb-example-xmc-posif-hall)" application with the desired name "PosifHall" configured for the *KIT_XMC47_RELAX_V1* BSP into the specified working directory, *C:/mtb_projects*:
 
    ```
-   project-creator-cli --board-id KIT_XMC47_RELAX_1 --app-id mtb-example-xmc-posif-hall --user-app-name MyXMCPosifHall --target-dir "C:/mtb_projects"
+   project-creator-cli --board-id KIT_XMC47_RELAX_V1 --app-id mtb-example-xmc-posif-hall --user-app-name PosifHall --target-dir "C:/mtb_projects"
    ```
+
+**Note:** The project-creator-cli tool uses the `git clone` and `make getlibs` commands to fetch the repository and import the required libraries. For details, see the "Project creator tools" section of the [ModusToolbox&trade; software user guide](https://www.cypress.com/ModusToolboxUserGuide) (locally available at *{ModusToolbox&trade; software install directory}/docs_{version}/mtb_user_guide.pdf*).
+
+</details>
+
+<details open><summary><b>In Third-party IDEs</b></summary>
 
 **Note:** Only VS code is supported.
 
@@ -123,9 +133,9 @@ The following example will clone the "[XMC Posif Hall](https://github.com/cypres
 
    2. In the **Quick Panel**, scroll down, and click **\<Application Name> Program (JLink)**.
 
-4. Connect Hall input signals to posif module input pins as mentioned in hardware setup section.
+4. Connect Hall input signals to posif module input pins as mentioned in Hardware setup section.
 
-5. Confirm that each time a correct Hall event is detected, an interrupt is generated and timing between the two correct Hall events are displayed on the UART terminal.
+5. Confirm that each time a correct Hall event is detected, an interrupt is generated and the timing between the two correct Hall events is displayed on the UART terminal.
 
    **Figure 1. Terminal output**
 
@@ -145,15 +155,16 @@ The following example will clone the "[XMC Posif Hall](https://github.com/cypres
 
 You can debug the example to step through the code. In the IDE, use the **\<Application Name> Debug (JLink)** configuration in the **Quick Panel**. For more details, see the "Program and debug" section in the [Eclipse IDE for ModusToolbox&trade; software user guide](https://www.cypress.com/MTBEclipseIDEUserGuide).
 
+
 ## Design and implementation
 
 The application uses the 'CYBSP_DEBUG_UART' resource to print messages in a UART terminal emulator. This resource is configured by the ModusToolbox&trade; software UART personality. The retargeting of the standard I/O to the CYBSP_DEBUG_UART port is included in the example. After using `retarget_io_init`, messages can be printed on the terminal by simply using `printf` commands.
 
 The POSIF module is configured in Hall sensor mode. Hall input signals are connected to the POSIF module input ports.
 
-The application uses a CCU4 slice configured using the CCU4 personality. The CAPTURE_0 CCU4 slice is configured in Capture mode. It will capture the timer value on the rising edge of the POSIF0.OUT1 signal. The DELAY_0 CCU4 slice is configured in Compare mode. It starts a timer, configured in single-shot mode. The status signal is connected to POSIF.HSDA to delay the input sampling to reject noise that might appear at those positions.
+The application uses a CCU4 slice configured using the CCU4 personality. The CAPTURE_0 CCU4 slice is configured in Capture mode. It will capture the timer value on the rising edge of the POSIF0.OUT1 signal. The DELAY_0 CCU4 slice is configured in Compare mode. It starts a timer that is configured in single-shot mode. The status signal is connected to POSIF.HSDA to delay the input sampling to reject noise that might appear at those positions.
 
-The POSIF module checks for the Hall sequence 1 -> 3 -> 2 -> 6 -> 4 -> 5. Each time a correct Hall event is detected, an interrupt is generated and the timing between the two correct Hall events are displayed on the terminal. It also checks for the occurrence of the incorrect Hall event interrupt and displays on the terminal.
+The POSIF module checks for the Hall sequence 1 -> 3 -> 2 -> 6 -> 4 -> 5. Each time a correct Hall event is detected, an interrupt is generated and the timing between the two correct Hall events is displayed on the terminal. It also checks for the occurrence of an incorrect Hall event interrupt and displays it on the terminal.
 
 ### Resources and settings
 
@@ -185,47 +196,39 @@ The project uses a custom *design.modus* file because the following settings wer
 
 ## Related resources
 
-| Kit guides                                            |                                                              |
-| :----------------------------------------------------------- | :----------------------------------------------------------- |
-| [XMC4700/XMC4800 relax kit series-V1](https://www.infineon.com/dgdl/Infineon-Board_User_Manual_XMC4700_XMC4800_Relax_Kit_Series-UM-v01_02-EN.pdf?fileId=5546d46250cc1fdf01513f8e052d07fc) – board user‘s manual | Describes the schematic and hardware of the XMC4700/XMC4800 relax kit series-V1, equipped with an Arm&reg; Cortex&reg;-M4 based XMC&trade; microcontroller from Infineon Technologies AG.|
-| [XMC1400 boot kit](https://www.infineon.com/dgdl/Infineon-Board_Users_Manual_XMC1400_Boot_Kit.pdf-UM-v01_00-EN.pdf?fileId=5546d462525dbac401527815f9a073fd) – board user‘s manual | Describes the schematic and hardware of XMC1400 boot kit for application code development on the XMC1404-Q064X0200 device.|
-| **Code examples**                                            |                                                              |
-| [Using ModusToolbox&trade; software](https://github.com/cypresssemiconductorco/Code-Examples-for-ModusToolbox-Software) |
-| **Device documentation**                                     |                                                              |
-| [XMC1000 family datasheets](https://www.infineon.com/cms/en/product/microcontroller/32-bit-industrial-microcontroller-based-on-arm-cortex-m/32-bit-xmc1000-industrial-microcontroller-arm-cortex-m0/#document-group-myInfineon-49) | [XMC1000 family technical reference manuals](https://www.infineon.com/cms/en/product/microcontroller/32-bit-industrial-microcontroller-based-on-arm-cortex-m/32-bit-xmc1000-industrial-microcontroller-arm-cortex-m0/#document-group-myInfineon-44) |
-| [XMC4000 family datasheets](https://www.infineon.com/cms/en/product/microcontroller/32-bit-industrial-microcontroller-based-on-arm-cortex-m/32-bit-xmc4000-industrial-microcontroller-arm-cortex-m4/#document-group-myInfineon-49) | [XMC4000 family technical reference manuals](https://www.infineon.com/cms/en/product/microcontroller/32-bit-industrial-microcontroller-based-on-arm-cortex-m/32-bit-xmc4000-industrial-microcontroller-arm-cortex-m4/#document-group-myInfineon-44) |
-| [AP32289 position interface (POSIF)](https://www.infineon.com/dgdl/Infineon-POSIF-XMC1000_XMC4000-AP32289-AN-v01_00-EN.pdf?fileId=5546d4624e765da5014ed938a6a7311f) |
-| **Development kits**                                         | Buy at www.infineon.com                                       |
-| [KIT_XMC14_BOOT_001](https://www.infineon.com/cms/en/product/evaluation-boards/kit_xmc14_boot_001/) boot kit XMC1400 | [KIT_XMC47_RELAX_V1](https://www.infineon.com/cms/en/product/evaluation-boards/kit_xmc47_relax_v1/) XMC4700 relax kit |
-| **Libraries**                                                 |                                                              |
-| XMC&trade; peripheral library (XMCLib) and docs  | [mtb-xmclib-cat3](https://github.com/cypresssemiconductorco/mtb-xmclib-cat3) on GitHub |
-| **Tools**                                                    |                                                              |
-| [Eclipse IDE for ModusToolbox&trade; software](https://www.cypress.com/modustoolbox)     | The cross-platform, Eclipse-based IDE for IoT designers that supports application configuration and development targeting converged MCU and wireless systems.             |
+Resources  | Links
+-----------|----------------------------------
+Code examples  | [Using ModusToolbox&trade; software](https://github.com/Infineon/Code-Examples-for-ModusToolbox-Software) on GitHub
+Device documentation | [XMC1000 family datasheets](https://www.infineon.com/cms/en/product/microcontroller/32-bit-industrial-microcontroller-based-on-arm-cortex-m/32-bit-xmc1000-industrial-microcontroller-arm-cortex-m0/#document-group-myInfineon-49) <br> [XMC1000 family technical reference manuals](https://www.infineon.com/cms/en/product/microcontroller/32-bit-industrial-microcontroller-based-on-arm-cortex-m/32-bit-xmc1000-industrial-microcontroller-arm-cortex-m0/#document-group-myInfineon-44) <br> [XMC4000 family datasheets](https://www.infineon.com/cms/en/product/microcontroller/32-bit-industrial-microcontroller-based-on-arm-cortex-m/32-bit-xmc4000-industrial-microcontroller-arm-cortex-m4/#document-group-myInfineon-49) <br> [XMC4000 family technical reference manuals](https://www.infineon.com/cms/en/product/microcontroller/32-bit-industrial-microcontroller-based-on-arm-cortex-m/32-bit-xmc4000-industrial-microcontroller-arm-cortex-m4/#document-group-myInfineon-44)
+Development kits | [XMC Eval Boards](https://www.infineon.com/cms/en/product/microcontroller/32-bit-industrial-microcontroller-based-on-arm-cortex-m/#boards)
+Libraries on GitHub  | [mtb-xmclib-cat3](https://github.com/Infineon/mtb-xmclib-cat3) – XMC&trade; peripheral driver library (XMCLib)
+Tools | [Eclipse IDE for ModusToolbox&trade; software](https://www.cypress.com/modustoolbox) – ModusToolbox&trade; software is a collection of easy-to-use software and tools enabling rapid development with Infineon MCUs, covering applications from embedded sense and control to wireless and cloud-connected systems using AIROC&trade; Wi-Fi and Bluetooth® connectivity devices.
+
 
 ## Other resources
 
 Infineon provides a wealth of data at www.infineon.com to help you select the right device, and quickly and effectively integrate it into your design.
 
-For XMC&trade; MCU devices, see [32-bit XMC&trade; industrial microcontroller based on Arm&reg; Cortex&reg;-M](https://www.infineon.com/cms/en/product/microcontroller/32-bit-industrial-microcontroller-based-on-arm-cortex-m/).
+For XMC&trade; MCU devices, see [32-bit XMC™ industrial microcontroller based on Arm® Cortex®-M](https://www.infineon.com/cms/en/product/microcontroller/32-bit-industrial-microcontroller-based-on-arm-cortex-m/).
+
 
 ## Document history
 
-Document title: *CE232706* - *XMC&trade; MCU: POSIF Hall*
+Document title: *CE232706* – *XMC&trade; MCU: POSIF Hall*
 
 | Version | Description of Change |
 | ------- | --------------------- |
 | 1.0.0   | New code example      |
+| 2.0.0   | Updated to support ModusToolbox™ software v3.0; CE will not be backwards compatible with previous versions of ModusToolbox™ software |
 ------
 
 All other trademarks or registered trademarks referenced herein are the property of their respective owners.
 
-![banner](images/ifx_logo_rgb.jpg)
-
-© 2021 Infineon Technologies AG
+© 2022 Infineon Technologies AG
 
 All Rights Reserved.
 
-### Legal Disclaimer
+### Legal disclaimer
 
 The information given in this document shall in no event be regarded as a guarantee of conditions or characteristics. With respect to any examples or hints given herein, any typical values stated herein and/or any information regarding the application of the device, Infineon Technologies hereby disclaims any and all warranties and liabilities of any kind, including without limitation, warranties of non-infringement of intellectual property rights of any third party.
 

@@ -7,7 +7,7 @@
 #
 ################################################################################
 # \copyright
-# Copyright 2018-2021, Cypress Semiconductor Corporation (an Infineon company)
+# Copyright 2018-2022, Cypress Semiconductor Corporation (an Infineon company)
 # SPDX-License-Identifier: Apache-2.0
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,6 +28,14 @@
 # Basic Configuration
 ################################################################################
 
+#Type of ModusToolbox Makefile Options include:
+#
+#COMBINED    -- Top Level Makefile usually for single standalone application
+#APPLICATION -- Top Level Makefile usually for multi project application
+#PROJECT     -- Project Makefile under Application
+#
+MTB_TYPE=COMBINED
+
 # Target board/hardware (BSP).
 # To change the target, it is recommended to use the Library manager
 # ('make modlibs' from command line), which will also update Eclipse IDE launch
@@ -40,7 +48,7 @@ TARGET=KIT_XMC14_BOOT_001
 #
 # If APPNAME is edited, ensure to update or regenerate launch
 # configurations for your IDE.
-APPNAME=mtb-example-xmc-posif-qd
+APPNAME=mtb-example-xmc-posif-hall
 
 # Name of toolchain to use. Options include:
 #
@@ -79,10 +87,10 @@ VERBOSE=
 # ... then code in directories named COMPONENT_foo and COMPONENT_bar will be
 # added to the build
 #
-COMPONENTS=CUSTOM_DESIGN_MODUS
+COMPONENTS=
 
 # Like COMPONENTS, but disable optional code that was enabled by default.
-DISABLE_COMPONENTS=BSP_DESIGN_MODUS
+DISABLE_COMPONENTS=
 
 # By default the build system automatically looks in the Makefile's directory
 # tree for source code and builds it. The SOURCES variable can be used to
