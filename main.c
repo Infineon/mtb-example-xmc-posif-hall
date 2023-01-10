@@ -1,15 +1,17 @@
 /*******************************************************************************
 * File Name:   main.c
 *
-* Description: This example demonstrates a Position Interface (POSIF) module in
-*              Hall sensor mode and uses the CCU40 module to determine the
+* Description: This example demonstrates a Position Interface (POSIF) module
+*              in Hall sensor mode and uses the CCU40 module to determine the
 *              speed of rotation of the motor.
+*              Instead of hall motor, the example demonstrates the use of
+*              POSIF_HALL module, using simulation via 3 PWM signals.
 *
 * Related Document: See README.md
 *
 ********************************************************************************
 *
-* Copyright (c) 2020, Infineon Technologies AG
+* Copyright (c) 2022, Infineon Technologies AG
 * All rights reserved.
 *
 * Boost Software License - Version 1.0 - August 17th, 2003
@@ -36,102 +38,40 @@
 * DEALINGS IN THE SOFTWARE.
 *
 *******************************************************************************/
+
 #include "cybsp.h"
 #include "cy_utils.h"
-#include "xmc_posif.h"
 #include "cy_retarget_io.h"
-#include "stdio.h"
-#include "xmc_ccu4.h"
+#include <stdio.h>
 
 /*******************************************************************************
 *  Macros
 *******************************************************************************/
-/* Define macros for XMC1400 Boot kit */
+#define TICKS_PER_SECOND                    (1000U)
+#define TICKS_WAIT                          (100U)
 
-#if (UC_SERIES == XMC14)
-#define INPUT_0         (XMC_POSIF_INPUT_PORT_B)     /* Choice of INPUT_PORT_B */
-#define INPUT_1         (XMC_POSIF_INPUT_PORT_A)     /* Choice of INPUT_PORT_A */
-#define INPUT_2         (XMC_POSIF_INPUT_PORT_A)     /* Choice of INPUT_PORT_A */
-#define INPUT_MAPPED_1  (XMC_CCU4_SLICE_INPUT_AE)    /* Port E */
-#define INPUT_MAPPED_2  (XMC_CCU4_SLICE_INPUT_AF)    /* Port F */
+/* Define macro to enable/disable printing of debug messages */
+#define ENABLE_XMC_DEBUG_PRINT              (0)
+
+/* Define macro to set the loop count before printing debug messages */
+#if ENABLE_XMC_DEBUG_PRINT
+#define DEBUG_LOOP_COUNT_MAX                (3U)
 #endif
-
-/* Define macros for XMC4700 Relax kit */
-#if (UC_SERIES == XMC47)
-#define INPUT_0         (XMC_POSIF_INPUT_PORT_B)     /* Choice of INPUT_PORT_B */
-#define INPUT_1         (XMC_POSIF_INPUT_PORT_B)     /* Choice of INPUT_PORT_B */
-#define INPUT_2         (XMC_POSIF_INPUT_PORT_B)     /* Choice of INPUT_PORT_A */
-#define INPUT_MAPPED_1  (XMC_CCU4_SLICE_INPUT_E)     /* Port E */
-#define INPUT_MAPPED_2  (XMC_CCU4_SLICE_INPUT_F)     /* Port F */
-#endif
-
-/* This gives the current and expected hall pattern in a register format */
-#define HALL_POSIF_MCM(EP,CP) (((uint32_t)EP<< 3)|(uint32_t)CP)
-#define TICKS_PER_SECOND      (1000U)
-#define TICKS_WAIT            (500U)
-
-/*******************************************************************************
-* Data Structures
-*******************************************************************************/
-/* POSIF module configuration */
-XMC_POSIF_CONFIG_t posif_config =
-{
-    .mode   = XMC_POSIF_MODE_HALL_SENSOR,  /* POSIF Operational mode */
-    .input0 = INPUT_0,                     /* Choice of input for Input-0 */
-    .input1 = INPUT_1,                     /* Choice of input for Input-1 */
-    .input2 = INPUT_2,                     /* Choice of input for Input-2 */
-    .filter = 0,                           /* Input filter configuration */
-};
-
-/* POSIF hall sensor configuration */
-XMC_POSIF_HSC_CONFIG_t posif_hall_config =
-{
-    .disable_idle_signal   = 1,  /* Disable idle signal upon wrong hall event */
-    .sampling_trigger      = 0,  /* HSDA is used to trigger POSIF to sample hall pattern */
-    .sampling_trigger_edge = 0   /* Rising edge */
-};
-
-/* Event 0: Start the slice on rising edge of POSIF0.OUT0 */
-XMC_CCU4_SLICE_EVENT_CONFIG_t start_event0_config =
-{
-    .mapped_input = INPUT_MAPPED_1,                                     /* Input signal for the Event */
-    .edge         = XMC_CCU4_SLICE_EVENT_EDGE_SENSITIVITY_RISING_EDGE,  /* Rising edge */
-    .level        = XMC_CCU4_SLICE_EVENT_LEVEL_SENSITIVITY_ACTIVE_HIGH, /* Active high */
-    .duration     = XMC_CCU4_SLICE_EVENT_FILTER_DISABLED                /* Filter disabled */
-};
-
-/* Event 0: Capture on rising edge of POSIF0.OUT1 */
-XMC_CCU4_SLICE_EVENT_CONFIG_t capture_event0_config =
-{
-    .mapped_input = INPUT_MAPPED_2,                                     /* Input signal for the Event */
-    .edge         = XMC_CCU4_SLICE_EVENT_EDGE_SENSITIVITY_RISING_EDGE,  /* Rising edge */
-    .level        = XMC_CCU4_SLICE_EVENT_LEVEL_SENSITIVITY_ACTIVE_HIGH, /* Active high */
-    .duration     = XMC_CCU4_SLICE_EVENT_FILTER_DISABLED                /* Filter disabled */
-};
 
 /*******************************************************************************
 * Global variables
 *******************************************************************************/
-/* This saves the configured pattern in clockwise direction.
- * Each value of this hall_pattern table is equal to
- * (expected hall << 3 | current hall)
- */
-uint8_t hall_pattern[] =
-{
-    (uint8_t)HALL_POSIF_MCM(0,0),(uint8_t)HALL_POSIF_MCM(3,1),
-    (uint8_t)HALL_POSIF_MCM(6,2),(uint8_t)HALL_POSIF_MCM(2,3),
-    (uint8_t)HALL_POSIF_MCM(5,4),(uint8_t)HALL_POSIF_MCM(1,5),
-    (uint8_t)HALL_POSIF_MCM(4,6),(uint8_t)HALL_POSIF_MCM(0,0)
-};
-
-/* Clock variable */
-static uint32_t clock = 0;
-
 /* Prescaler variable */
 static uint32_t prescaler = 0;
 
 /* Correct hall event and wrong hall event flag variables */
-uint8_t che_flag = 0, whe_flag =0;
+uint8_t che_flag = 0, whe_flag = 0;
+
+/* CCU8 pulse counter */
+uint8_t ccu8_pulse_counter = 0;
+
+/* Timers flag */
+bool timers_started = false;
 
 /* Hall input array */
 uint8_t hall[3] = {0,0,0};
@@ -140,23 +80,28 @@ uint8_t hall[3] = {0,0,0};
 uint8_t hall_position = 0;
 
 /* Correct hall event variable */
-uint32_t correct_hall_event = 0;
+uint32_t hall_events_interval = 0;
 
-/*******************************************************************************
-* Function Name: SysTick Handler
-********************************************************************************
-* Summary:
-*  This is the interrupt handler function for the System Tick interrupt. This
-*  function print the time interval between two correct hall events and wrong
-*  hall event.
-*
-* Parameters:
-*  none
-*
-* Return:
-*  void
-*
-*******************************************************************************/
+#if ENABLE_XMC_DEBUG_PRINT
+/* Initialize the current loop count to zero */
+static uint32_t debug_loop_count = 0;
+#endif
+
+ /*******************************************************************************
+ * Function Name: SysTick Handler
+ ********************************************************************************
+ * Summary:
+ *  This is the interrupt handler function for the System Tick interrupt. This
+ *  function print the time interval between two correct hall events and wrong
+ *  hall event.
+ *
+ * Parameters:
+ *  none
+ *
+ * Return:
+ *  void
+ *
+ *******************************************************************************/
 void SysTick_Handler(void)
 {
     /* Ticks wait */
@@ -173,8 +118,14 @@ void SysTick_Handler(void)
         {
             /* Set che_flag to 0 */
             che_flag = 0;
-            /* Print the time interval between two correct hall events in nano seconds */
-            printf("Time interval between two correct hall events: %luns\r\n", correct_hall_event);
+            #if ENABLE_XMC_DEBUG_PRINT
+                debug_loop_count++;
+                if (debug_loop_count == DEBUG_LOOP_COUNT_MAX)
+                    printf("All three correct hall events occurs\r\n");
+            #else
+                /* Print the time interval between two correct hall events in nano seconds */
+                printf("Time interval between two correct hall events: %luns\r\n", hall_events_interval);
+            #endif
         }
         /* Check if wrong hall event occurs */
         else if((che_flag == 0) && (whe_flag == 1))
@@ -182,7 +133,7 @@ void SysTick_Handler(void)
             /* Set whe_flag to 0 */
             whe_flag = 0;
             /* Print the wrong hall event */
-            printf("Wrong Hall Event \r\n");
+            printf("Wrong hall event\r\n");
         }
     }
 }
@@ -204,7 +155,7 @@ void SysTick_Handler(void)
 void POSIF0_0_IRQHandler(void)
 {
     /* Get the capture timer value */
-    uint16_t capture_value = 0;
+    uint16_t captured_value = 0;
 
     /* Set che_flag to 1 */
     che_flag = 1;
@@ -212,19 +163,20 @@ void POSIF0_0_IRQHandler(void)
     whe_flag = 0;
 
     /* Check for a rising edge of POSIF0.OUT1 signal */
-    if (XMC_CCU4_SLICE_GetEvent(CAPTURE_0_HW, XMC_CCU4_SLICE_IRQ_ID_EVENT0))
+    if (XMC_CCU4_SLICE_GetEvent(HALL_SPEED_TIMER_HW, XMC_CCU4_SLICE_IRQ_ID_EVENT0))
     {
         /* Clear event*/
-        XMC_CCU4_SLICE_ClearEvent(CAPTURE_0_HW, XMC_CCU4_SLICE_IRQ_ID_EVENT0);
+        XMC_CCU4_SLICE_ClearEvent(HALL_SPEED_TIMER_HW, XMC_CCU4_SLICE_IRQ_ID_EVENT0);
 
         /* Get captured timer value on rising edge */
-        capture_value = XMC_CCU4_SLICE_GetCaptureRegisterValue(CAPTURE_0_HW,1U);
+        captured_value = XMC_CCU4_SLICE_GetCaptureRegisterValue(HALL_SPEED_TIMER_HW, 1U);
 
-        /* Calculate the time between two correct hall events */
-        correct_hall_event = (uint32_t)((capture_value * prescaler * 1000)/clock);
+        /* Calculate the time between two correct hall events
+         * (captured_value * prescaler * 1000) / clock */
+        hall_events_interval = captured_value * HALL_SPEED_TIMER_TICK_NS;
     }
     /* Clear pending event */
-    XMC_POSIF_ClearEvent(POSIF0, XMC_POSIF_IRQ_EVENT_CHE);
+    XMC_POSIF_ClearEvent(HALL_POSIF_HW, XMC_POSIF_IRQ_EVENT_CHE);
 }
 
 /*******************************************************************************
@@ -249,7 +201,7 @@ void POSIF0_1_IRQHandler(void)
     che_flag = 0;
 
     /* Clear pending event */
-    XMC_POSIF_ClearEvent(POSIF0, XMC_POSIF_IRQ_EVENT_WHE);
+    XMC_POSIF_ClearEvent(HALL_POSIF_HW, XMC_POSIF_IRQ_EVENT_WHE);
 }
 
 /*******************************************************************************
@@ -273,17 +225,8 @@ int main(void)
 {
     cy_rslt_t result;
 
-    #if (UC_SERIES == XMC14)
-    /* Get CCU clock frequency in Hertz */
-    clock = (XMC_SCU_CLOCK_GetFastPeripheralClockFrequency()/1000000);
-    #endif
-    #if (UC_SERIES == XMC47)
-    /* Get CCU clock frequency in Hertz */
-    clock = (XMC_SCU_CLOCK_GetCcuClockFrequency()/1000000);
-    #endif
-
     /* Initialize the device and board peripherals */
-    result = cybsp_init() ;
+    result = cybsp_init();
     if (result != CY_RSLT_SUCCESS)
     {
         CY_ASSERT(0);
@@ -292,32 +235,18 @@ int main(void)
     /* Initialize retarget-io to use the debug UART port */
     cy_retarget_io_init(CYBSP_DEBUG_UART_HW);
 
-    /* Get the prescaler value used in CCU40_CC41 Slice */
-    prescaler = (1 << (XMC_CCU4_SLICE_PRESCALER_t)XMC_CCU4_SLICE_GetPrescaler(CAPTURE_0_HW));
-
+    #if ENABLE_XMC_DEBUG_PRINT
+    printf("Initialization done\r\n");
+    #else
     /* \x1b[2J\x1b[;H - ANSI ESC sequence for clear screen */
     printf("\x1b[2J\x1b[;H");
     printf("============================================================ \r\n");
     printf("XMC MCU: POSIF Hall example \r\n");
     printf("============================================================ \r\n");
+    #endif
 
-    /* Configure event for CCU40_CC40 and CCU40_CC41 Slices */
-    XMC_CCU4_SLICE_ConfigureEvent(CCU40_CC40, XMC_CCU4_SLICE_EVENT_0, &start_event0_config);
-    XMC_CCU4_SLICE_ConfigureEvent(CCU40_CC41, XMC_CCU4_SLICE_EVENT_0, &capture_event0_config);
-
-    /* Initialize POSIF module */
-    XMC_POSIF_Init(POSIF0, &posif_config);
-
-    /* Initialize hall sensor mode */
-    XMC_POSIF_HSC_Init(POSIF0, &posif_hall_config);
-
-    /* Enables event generation */
-    XMC_POSIF_EnableEvent(POSIF0, XMC_POSIF_IRQ_EVENT_CHE);
-    XMC_POSIF_EnableEvent(POSIF0, XMC_POSIF_IRQ_EVENT_WHE);
-
-    /* Connect correct hall event to SR0 and wrong hall event to SR1 */
-    XMC_POSIF_SetInterruptNode(POSIF0, XMC_POSIF_IRQ_EVENT_CHE, XMC_POSIF_SR_ID_0);
-    XMC_POSIF_SetInterruptNode(POSIF0, XMC_POSIF_IRQ_EVENT_WHE, XMC_POSIF_SR_ID_1);
+    /* Get the prescaler value used in CCU40_CC41 Slice */
+    prescaler = (1 << (XMC_CCU4_SLICE_PRESCALER_t)XMC_CCU4_SLICE_GetPrescaler(HALL_SPEED_TIMER_HW));
 
     /* Set priority */
     NVIC_SetPriority(POSIF0_0_IRQn, 0U);
@@ -327,28 +256,62 @@ int main(void)
     NVIC_EnableIRQ(POSIF0_0_IRQn);
     NVIC_EnableIRQ(POSIF0_1_IRQn);
 
-    /* Start the POSIF module */
-    XMC_POSIF_Start(POSIF0);
-
-    /* Start CCU40_CC40 and CCU40_CC41 Timers */
-    XMC_CCU4_SLICE_StartTimer(DELAY_0_HW);
-    XMC_CCU4_SLICE_StartTimer(CAPTURE_0_HW);
-
     /* Print the CHE/WHE occurrence for every 500ms */
     SysTick_Config(SystemCoreClock / TICKS_PER_SECOND);
 
+    /* Start HALL_1, HALL_2 and HALL_3 Timers */
+    XMC_CCU8_SLICE_StartTimer(HALL_1_HW);
+    XMC_CCU8_SLICE_StartTimer(HALL_2_HW);
+    XMC_CCU8_SLICE_StartTimer(HALL_3_HW);
+
     while (1)
     {
-        /* Read the Hall input GPIO pins */
-        hall[0]=XMC_GPIO_GetInput(HALL_INPUT_1_PORT, HALL_INPUT_1_PIN);
-        hall[1]=XMC_GPIO_GetInput(HALL_INPUT_2_PORT, HALL_INPUT_2_PIN);
-        hall[2]=XMC_GPIO_GetInput(HALL_INPUT_3_PORT, HALL_INPUT_3_PIN);
-        hall_position = (uint8_t)((hall[0] | (hall[1] << 1) | (hall[2] << 2)));
+        XMC_Delay(1);
+        /* Checks if period match event has occurred */
+        if (XMC_CCU8_SLICE_GetEvent(HALL_3_HW, XMC_CCU8_SLICE_IRQ_ID_PERIOD_MATCH))
+        {
+            /* Timers are not started and CCU8 pulse counter greater than 3 */
+            if ((ccu8_pulse_counter++ > 3) && (!timers_started))
+            {
+                /* Start the Encoder */
+                XMC_POSIF_Start(HALL_POSIF_HW);
 
-        /* Configure current and expected hall patterns */
-        XMC_POSIF_HSC_SetHallPatterns(POSIF0, hall_pattern[hall_position]);
-        /* Update hall pattern */
-        XMC_POSIF_HSC_UpdateHallPattern(POSIF0);
+                /* Read the Hall input GPIO pins */
+                hall[0] = XMC_GPIO_GetInput(HALL_INPUT_1_PORT, HALL_INPUT_1_PIN);
+                hall[1] = XMC_GPIO_GetInput(HALL_INPUT_2_PORT, HALL_INPUT_2_PIN);
+                hall[2] = XMC_GPIO_GetInput(HALL_INPUT_3_PORT, HALL_INPUT_3_PIN);
+                hall_position = (uint8_t)((hall[0] | (hall[1] << 1) | (hall[2] << 2)));
+
+                /* Configure current and expected hall patterns */
+                XMC_POSIF_HSC_SetHallPatterns(HALL_POSIF_HW, HALL_POSIF_Hall_Pattern[hall_position ? hall_position : 1]);
+
+                /* Update hall pattern */
+                XMC_POSIF_HSC_UpdateHallPattern(HALL_POSIF_HW);
+
+                /* Start CCU4 timers */
+                XMC_CCU4_SLICE_StartTimer(HALL_DELAY_TIMER_HW);
+                XMC_CCU4_SLICE_StartTimer(HALL_SPEED_TIMER_HW);
+
+                /* Sets the timers flag to the true value */
+                timers_started = true;
+            }
+            XMC_CCU8_SLICE_ClearEvent(HALL_3_HW, XMC_CCU8_SLICE_IRQ_ID_PERIOD_MATCH);
+        }
+
+        /* Delay and Speed timers are started */
+        if (timers_started)
+        {
+            /* Read the Hall input GPIO pins */
+            hall[0] = XMC_GPIO_GetInput(HALL_INPUT_1_PORT, HALL_INPUT_1_PIN);
+            hall[1] = XMC_GPIO_GetInput(HALL_INPUT_2_PORT, HALL_INPUT_2_PIN);
+            hall[2] = XMC_GPIO_GetInput(HALL_INPUT_3_PORT, HALL_INPUT_3_PIN);
+            hall_position = (uint8_t)((hall[0] | (hall[1] << 1) | (hall[2] << 2)));
+
+            /* Configure current and expected hall patterns */
+            XMC_POSIF_HSC_SetHallPatterns(HALL_POSIF_HW, HALL_POSIF_Hall_Pattern[hall_position ? hall_position : 1]);
+
+            /* Update hall pattern */
+            XMC_POSIF_HSC_UpdateHallPattern(HALL_POSIF_HW);
+        }
     }
 }
-/* [] END OF FILE */
