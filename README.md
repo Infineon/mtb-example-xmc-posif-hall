@@ -4,11 +4,11 @@ This code example demonstrates a position interface (POSIF) module in hall senso
 
 [View this README on GitHub.](https://github.com/Infineon/mtb-example-xmc-posif-hall)
 
-[Provide feedback on this code example.](https://cypress.co1.qualtrics.com/jfe/form/SV_1NTns53sK2yiljn?Q_EED=eyJVbmlxdWUgRG9jIElkIjoiQ0UyMzI3MDYiLCJTcGVjIE51bWJlciI6IjAwMi0zMjcwNiIsIkRvYyBUaXRsZSI6IlhNQyZ0cmFkZTsgTUNVOiBQT1NJRiBoYWxsIiwicmlkIjoicHN5dSIsIkRvYyB2ZXJzaW9uIjoiMi4xLjAiLCJEb2MgTGFuZ3VhZ2UiOiJFbmdsaXNoIiwiRG9jIERpdmlzaW9uIjoiTUNEIiwiRG9jIEJVIjoiSUNXIiwiRG9jIEZhbWlseSI6Ik4vQSJ9)
+[Provide feedback on this code example.](https://cypress.co1.qualtrics.com/jfe/form/SV_1NTns53sK2yiljn?Q_EED=eyJVbmlxdWUgRG9jIElkIjoiQ0UyMzI3MDYiLCJTcGVjIE51bWJlciI6IjAwMi0zMjcwNiIsIkRvYyBUaXRsZSI6IlhNQyZ0cmFkZTsgTUNVOiBQT1NJRiBoYWxsIiwicmlkIjoiaG9zYWtvdGVuYWdhIiwiRG9jIHZlcnNpb24iOiIyLjEuMSIsIkRvYyBMYW5ndWFnZSI6IkVuZ2xpc2giLCJEb2MgRGl2aXNpb24iOiJNQ0QiLCJEb2MgQlUiOiJJQ1ciLCJEb2MgRmFtaWx5IjoiTi9BIn0=)
 
 ## Requirements
 
-- [ModusToolbox&trade; software](https://www.infineon.com/products/modustoolbox-software-environment) v3.0
+- [ModusToolbox&trade; software](https://www.infineon.com/products/modustoolbox-software-environment) v3.0 or later (tested with v3.3)
 - [SEGGER J-Link software](https://www.segger.com/downloads/jlink/#J-LinkSoftwareAndDocumentationPack)
 - Programming language: C
 - Associated parts: All [XMC&trade; MCU](https://www.infineon.com/cms/en/product/microcontroller/32-bit-industrial-microcontroller-based-on-arm-cortex-m/) parts
@@ -16,13 +16,11 @@ This code example demonstrates a position interface (POSIF) module in hall senso
 ## Supported toolchains (make variable 'TOOLCHAIN')
 
 - GNU Arm&reg; embedded compiler v10.3.1 (`GCC_ARM`) - Default value of `TOOLCHAIN`
-- Arm&reg; compiler v6.16 (`ARM`)
-- IAR C/C++ compiler v9.30.1 (`IAR`)
 
 ## Supported kits (make variable 'TARGET')
 
-- [XMC1300 boot kit](https://www.infineon.com/cms/en/product/evaluation-boards/kit_xmc13_boot_001/) (`KIT_XMC13_BOOT_001`)
 - [XMC1400 boot kit](https://www.infineon.com/cms/en/product/evaluation-boards/kit_xmc14_boot_001/) (`KIT_XMC14_BOOT_001`) - Default value of `TARGET`
+- [XMC1300 boot kit](https://www.infineon.com/cms/en/product/evaluation-boards/kit_xmc13_boot_001/) (`KIT_XMC13_BOOT_001`)
 - [XMC4200 Platform2Go kit](https://www.infineon.com/cms/en/product/evaluation-boards/kit_xmc_plt2go_xmc4200/) (`KIT_XMC_PLT2GO_XMC4200`)
 - [XMC4400 Platform2Go kit](https://www.infineon.com/cms/en/product/evaluation-boards/kit_xmc_plt2go_xmc4400/) (`KIT_XMC_PLT2GO_XMC4400`)
 - [XMC4500 relax kit](https://www.infineon.com/cms/en/product/evaluation-boards/kit_xmc45_relax_v1/) (`KIT_XMC45_RELAX_V1`)
@@ -309,6 +307,7 @@ Document title: *CE232706* – *XMC&trade; MCU: POSIF hall*
 | 1.1.0   | Added support for new kits |
 | 2.0.0   | Updated to support ModusToolbox&trade; software v3.0. This CE will not be backwards compatible with previous versions of ModusToolbox&trade; software. |
 | 2.1.0   | Added support for POSIF personality |
+| 2.1.1   | Fixed build warnings |
 ------
 
 All other trademarks or registered trademarks referenced herein are the property of their respective owners.

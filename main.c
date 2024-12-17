@@ -61,9 +61,6 @@
 /*******************************************************************************
 * Global variables
 *******************************************************************************/
-/* Prescaler variable */
-static uint32_t prescaler = 0;
-
 /* Correct hall event and wrong hall event flag variables */
 uint8_t che_flag = 0, whe_flag = 0;
 
@@ -80,7 +77,7 @@ uint8_t hall[3] = {0,0,0};
 uint8_t hall_position = 0;
 
 /* Correct hall event variable */
-uint32_t hall_events_interval = 0;
+unsigned long hall_events_interval = 0;
 
 #if ENABLE_XMC_DEBUG_PRINT
 /* Initialize the current loop count to zero */
@@ -245,8 +242,6 @@ int main(void)
     printf("============================================================ \r\n");
     #endif
 
-    /* Get the prescaler value used in CCU40_CC41 Slice */
-    prescaler = (1 << (XMC_CCU4_SLICE_PRESCALER_t)XMC_CCU4_SLICE_GetPrescaler(HALL_SPEED_TIMER_HW));
 
     /* Set priority */
     NVIC_SetPriority(POSIF0_0_IRQn, 0U);
